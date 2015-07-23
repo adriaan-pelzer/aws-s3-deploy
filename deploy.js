@@ -29,10 +29,11 @@ H ( [ path.resolve ( './deployConf.js' ) ] )
                 return callBack ( exists );
             } );
         } )( configFile )
-            .flatMap ( errorIf ( R.isNil, "Config file does not existi" ) )
+            .flatMap ( errorIf ( R.isNil, "Config file does not exist" ) )
             .map ( R.always ( configFile ) )
     } )
     .map ( require )
+    .map ( R.ifElse ( R.always ( R.isNil ( process.argv[2] ) ), R.identity, R.prop ( process.argv[2] ) ) )
     .flatMap ( function ( config ) {
         return H ( [ path.resolve ( './' ) ] )
             .flatMap ( H.wrapCallback ( function ( path, callBack ) {
