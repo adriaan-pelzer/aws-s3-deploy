@@ -1,0 +1,37 @@
+{
+  "name": "aws-s3-deploy",
+  "version": "0.0.1",
+  "description": "Deploy static websites to S3 - all files will be public",
+  "main": "deploy.js",
+  "bin": {
+    "s3-deploy": "deploy.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adriaan-pelzer/aws-s3-deploy.git"
+  },
+  "keywords": [
+    "AWS",
+    "S3",
+    "deploy",
+    "static",
+    "website"
+  ],
+  "author": "Adriaan Pelzer",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/adriaan-pelzer/aws-s3-deploy/issues"
+  },
+  "homepage": "https://github.com/adriaan-pelzer/aws-s3-deploy#readme",
+  "dependencies": {
+    "aws-sdk": "^2.1.39",
+    "highland": "^2.5.1",
+    "highland-wrapcallback": "0.0.1",
+    "path": "^0.11.14",
+    "ramda": "^0.17.1",
+    "recursive-readdir": "^1.2.1"
+  }
+}
