@@ -56,10 +56,17 @@ H ( [ path.resolve ( './deployConf.js' ) ] )
                                     ContentType: mime.lookup ( filename )
                                 };
                             } );
-                    } );
+                    } )
+                    .flatMap ( wrapCallback ( s3, 'putObject' ) )
+                    .flatMap ( H.wrapCallback ( function ( result, callBack ) {
+                        if ( result.ETag ) {
+                            return callBack ( null, filename + ' uploaded successfully' );
+                        }
+
+                        return callBack ( filename + ' could not be uploaded' );
+                    } ) );
             } );
 
     } )
-    .flatMap ( wrapCallback ( s3, 'putObject' ) )
     .errors ( R.compose ( R.unary ( console.error ), R.add ( 'ERROR: ' ) ) )
     .each ( console.log );
