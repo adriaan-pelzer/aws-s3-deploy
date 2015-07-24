@@ -8,6 +8,7 @@ var fs = require ( 'fs' );
 var rr = require ( 'recursive-readdir' );
 var wrapCallback = require ( 'highland-wrapcallback' );
 var mime = require ( 'mime' );
+var handlebars = require ( 'handlebars' );
 
 var errorIf = function ( pred, error ) {
     return H.wrapCallback ( function ( input, callBack ) {
@@ -52,7 +53,7 @@ H ( [ path.resolve ( './deployConf.js' ) ] )
                                     Bucket: config.Bucket,
                                     Key: Key,
                                     ACL: 'public-read',
-                                    Body: Body,
+                                    Body: config.data ? handlebars.compile ( Body.toString ( 'utf8' ) )( config.data ) : Body,
                                     ContentType: mime.lookup ( filename )
                                 };
                             } );
