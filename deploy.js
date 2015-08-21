@@ -9,6 +9,7 @@ var rr = require ( 'recursive-readdir' );
 var wrapCallback = require ( 'highland-wrapcallback' );
 var mime = require ( 'mime' );
 var handlebars = require ( 'handlebars' );
+var glob = require ( 'glob' );
 
 var errorIf = function ( pred, error ) {
     return H.wrapCallback ( function ( input, callBack ) {
@@ -42,6 +43,12 @@ H ( [ path.resolve ( './deployConf.js' ) ] )
                 rr ( path, config.Omit || [], callBack );
             } ) )
             .sequence ()
+            .flatFilter ( function ( filename ) {
+                return H ( config.Omit )
+                    .filter ( R.match ( /\*/ ) )
+                    .collect ()
+                    .map ( R.always ( true ) );
+            } )
             .flatMap ( function ( filename ) {
                 return H.wrapCallback ( fs.readFile )( filename )
                     .flatMap ( function ( Body ) {
