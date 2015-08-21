@@ -45,9 +45,12 @@ H ( [ path.resolve ( './deployConf.js' ) ] )
             .sequence ()
             .flatFilter ( function ( filename ) {
                 return H ( config.Omit )
-                    .filter ( R.match ( /\*/ ) )
+                    .flatMap ( H.wrapCallback ( glob ) )
                     .collect ()
-                    .map ( R.always ( true ) );
+                    .map ( R.flatten )
+                    .map ( R.map ( path.resolve ) )
+                    .map ( R.contains ( filename ) )
+                    .map ( R.not );
             } )
             .flatMap ( function ( filename ) {
                 return H.wrapCallback ( fs.readFile )( filename )
