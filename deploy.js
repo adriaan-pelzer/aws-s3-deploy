@@ -59,11 +59,23 @@ H ( [ path.resolve ( './deployConf.js' ) ] )
                             .invoke ( 'replace', [ path.resolve ( './' ) + '/', '' ] )
                             .map ( R.add ( config.Folder ? ( config.Folder + '/' ) : '' ) )
                             .map ( function ( Key ) {
+                                var body;
+
+                                if ( config.data ) {
+                                    try {
+                                        body = handlebars.compile ( Body.toString ( 'utf8' ) )( config.data );
+                                    } catch ( error ) {
+                                        body = Body;
+                                    }
+                                } else {
+                                    body = Body;
+                                }
+
                                 return {
                                     Bucket: config.Bucket,
                                     Key: Key,
                                     ACL: 'public-read',
-                                    Body: config.data ? handlebars.compile ( Body.toString ( 'utf8' ) )( config.data ) : Body,
+                                    Body: body,
                                     ContentType: mime.lookup ( filename )
                                 };
                             } );
