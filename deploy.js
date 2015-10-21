@@ -56,7 +56,8 @@ H ( [ path.resolve ( './deployConf.js' ) ] )
                 return H.wrapCallback ( fs.readFile )( filename )
                     .flatMap ( function ( Body ) {
                         return H ( [ filename ] )
-                            .invoke ( 'replace', [ path.resolve ( './' ) + '/', '' ] )
+                            .invoke ( 'replace', [ path.resolve ( './' ) + path.sep, '' ] )
+                            .map ( R.replace ( /\\/g, '/' ) )
                             .map ( R.add ( config.Folder ? ( config.Folder + '/' ) : '' ) )
                             .map ( function ( Key ) {
                                 var body;
