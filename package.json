@@ -1,6 +1,6 @@
 {
   "name": "aws-s3-deploy",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "Deploy static websites to S3 - all files will be public",
   "main": "deploy.js",
   "bin": {
