@@ -25,7 +25,7 @@ var invalidate = R.curry ( function ( cdnId, s3Parms ) {
     return R.isNil ( cdnId ) ? H ( [ null ] ) : W ( cf, 'createInvalidation' )( {
         DistributionId: cdnId,
         InvalidationBatch: {
-            CallerReference: '/' + s3Parms.Key,
+            CallerReference: new Date ().valueOf () + '/' + s3Parms.Key,
             Paths: {
                 Quantity: 1,
                 Items: [
@@ -107,6 +107,15 @@ H ( [ path.resolve ( './deployConf.js' ) ] )
                                     return callBack ( filename + ' could not be uploaded' );
                                 } ) ),
                             invalidate ( config.cdnId, s3Parms )
+                                .flatMap ( H.wrapCallback ( function ( result, callBack ) {
+                                    if ( R.isNil ( result ) ) {
+                                        return callBack ( null, 'no invalidation needed' );
+                                    } else if ( result.Invalidation && ( result.Invalidation.Status === 'InProgress' ) ) {
+                                        return callBack ( null, filename + ' invalidated successfully' );
+                                    } else {
+                                        return callBack ( filename + ' could not be invalidated' );
+                                    }
+                                } ) )
                         ] );
                     } )
                     .parallel ( 2 )
