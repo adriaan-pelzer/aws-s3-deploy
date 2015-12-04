@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
-var aws = require ( 'aws-sdk' ), s3 = new aws.S3 ( { region: 'eu-west-1' } );
+var aws = require ( 'aws-sdk' ), s3 = new aws.S3 ( { region: 'eu-west-1' } ), cf = new aws.CloudFront ( { region: 'eu-west-1' } );
 var H = require ( 'highland' );
 var R = require ( 'ramda' );
 var path = require ( 'path' );
 var fs = require ( 'fs' );
 var rr = require ( 'recursive-readdir' );
-var wrapCallback = require ( 'highland-wrapcallback' );
+var W = require ( 'highland-wrapcallback' );
 var mime = require ( 'mime' );
 var handlebars = require ( 'handlebars' );
 var glob = require ( 'glob' );
@@ -20,6 +20,21 @@ var errorIf = function ( pred, error ) {
         return callBack ( null, input );
     } );
 };
+
+var invalidate = R.curry ( function ( cdnId, s3Parms ) {
+    return R.isNil ( cdnId ) ? H ( [ null ] ) : W ( cf, 'createInvalidation' )( {
+        DistributionId: cdnId,
+        InvalidationBatch: {
+            CallerReference: '/' + s3Parms.Key,
+            Paths: {
+                Quantity: 1,
+                Items: [
+                    '/' + s3Parms.Key
+                ]
+            }
+        }
+    } );
+} );
 
 H ( [ path.resolve ( './deployConf.js' ) ] )
     .flatMap ( function ( configFile ) {
@@ -81,14 +96,22 @@ H ( [ path.resolve ( './deployConf.js' ) ] )
                                 };
                             } );
                     } )
-                    .flatMap ( wrapCallback ( s3, 'putObject' ) )
-                    .flatMap ( H.wrapCallback ( function ( result, callBack ) {
-                        if ( result.ETag ) {
-                            return callBack ( null, filename + ' uploaded successfully' );
-                        }
+                    .flatMap ( function ( s3Parms ) {
+                        return H ( [
+                            W ( s3, 'putObject' )( s3Parms )
+                                .flatMap ( H.wrapCallback ( function ( result, callBack ) {
+                                    if ( result.ETag ) {
+                                        return callBack ( null, filename + ' uploaded successfully' );
+                                    }
 
-                        return callBack ( filename + ' could not be uploaded' );
-                    } ) );
+                                    return callBack ( filename + ' could not be uploaded' );
+                                } ) ),
+                            invalidate ( config.cdnId, s3Parms )
+                        ] );
+                    } )
+                    .parallel ( 2 )
+                    .collect ();
+
             } );
 
     } )

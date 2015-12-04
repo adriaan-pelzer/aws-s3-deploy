@@ -1,6 +1,6 @@
 module.exports = {
     prod: {
-        Bucket: 'test-s3-deploy',
+        Bucket: 's3.eip.telegraph.co.uk',
         Folder: 'testFolder',
         Omit: [
             'deployConf.js'
@@ -11,8 +11,9 @@ module.exports = {
         }
     },
     staging: {
-        Bucket: 'test-s3-deploy',
-        Folder: 'testFolder2',
+        Bucket: 's3-staging.eip.telegraph.co.uk',
+        cdnId: 'E2YWDG5C5WR01M',
+        Folder: 'testFolder',
         Omit: [
             'deployConf.js'
         ],
