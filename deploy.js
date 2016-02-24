@@ -36,6 +36,19 @@ var invalidate = R.curry ( function ( cdnId, s3Parms ) {
     } );
 } );
 
+var invalidateBatch = R.curry ( function ( cdnId, s3Keys ) {
+    return R.isNil ( cdnId ) ? H ( [ null ] ) : W ( cf, 'createInvalidation' )( {
+        DistributionId: cdnId,
+        InvalidationBatch: {
+            CallerReference: new Date ().valueOf () + '/' + Math.floor ( Math.random () * 65535 ),
+            Paths: {
+                Quantity: s3Keys.length,
+                Items: R.map ( R.add ( '/' ), s3Keys )
+            }
+        }
+    } );
+} );
+
 var cwd = process.argv[3] || './';
 
 H ( [ path.resolve ( path.join ( cwd, 'deployConf.js' ) ) ] )
@@ -98,33 +111,32 @@ H ( [ path.resolve ( path.join ( cwd, 'deployConf.js' ) ) ] )
                                 };
                             } );
                     } )
-                    .flatMap ( function ( s3Parms ) {
-                        return H ( [
-                            W ( s3, 'putObject' )( s3Parms )
-                                .flatMap ( H.wrapCallback ( function ( result, callBack ) {
-                                    if ( result.ETag ) {
-                                        return callBack ( null, filename + ' uploaded successfully' );
-                                    }
+                    .map ( function ( s3Parms ) {
+                        return W ( s3, 'putObject' )( s3Parms )
+                            .flatMap ( H.wrapCallback ( function ( result, callBack ) {
+                                if ( result.ETag ) {
+                                    console.log ( filename + ' uploaded successfully' );
+                                    return callBack ( null, s3Parms.Key );
+                                }
 
-                                    return callBack ( filename + ' could not be uploaded' );
-                                } ) ),
-                            invalidate ( config.cdnId, s3Parms )
-                                .flatMap ( H.wrapCallback ( function ( result, callBack ) {
-                                    if ( R.isNil ( result ) ) {
-                                        return callBack ( null, 'no invalidation needed' );
-                                    } else if ( result.Invalidation && ( result.Invalidation.Status === 'InProgress' ) ) {
-                                        return callBack ( null, filename + ' invalidated successfully' );
-                                    } else {
-                                        return callBack ( filename + ' could not be invalidated' );
-                                    }
-                                } ) )
-                        ] );
+                                console.error ( filename + ' could not be uploaded' );
+                                return callBack ( null, null );
+                            } ) )
+                            .reject ( R.isNil );
                     } )
-                    .parallel ( 2 )
-                    .collect ();
-
-            } );
-
+                    .parallel ( 100 );
+            } )
+            .collect ()
+            .flatMap ( invalidateBatch ( config.cdnId ) )
+            .flatMap ( H.wrapCallback ( function ( result, callBack ) {
+                if ( R.isNil ( result ) ) {
+                    return callBack ( null, 'no invalidation needed' );
+                } else if ( result.Invalidation && ( result.Invalidation.Status === 'InProgress' ) ) {
+                    return callBack ( null, 'Files invalidated successfully' );
+                } else {
+                    return callBack ( 'Invalidation failed' );
+                }
+            } ) );
     } )
     .errors ( R.compose ( R.unary ( console.error ), R.add ( 'ERROR: ' ) ) )
     .each ( console.log );
