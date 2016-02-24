@@ -36,7 +36,9 @@ var invalidate = R.curry ( function ( cdnId, s3Parms ) {
     } );
 } );
 
-H ( [ path.resolve ( './deployConf.js' ) ] )
+var cwd = process.argv[3] || './';
+
+H ( [ path.resolve ( path.join ( cwd, 'deployConf.js' ) ) ] )
     .flatMap ( function ( configFile ) {
         return H.wrapCallback ( function ( configFile, callBack ) {
             fs.exists ( configFile, function ( exists ) {
@@ -53,7 +55,7 @@ H ( [ path.resolve ( './deployConf.js' ) ] )
     .map ( require )
     .map ( R.ifElse ( R.always ( R.isNil ( process.argv[2] ) ), R.identity, R.prop ( process.argv[2] ) ) )
     .flatMap ( function ( config ) {
-        return H ( [ path.resolve ( './' ) ] )
+        return H ( [ path.resolve ( cwd ) ] )
             .flatMap ( H.wrapCallback ( function ( path, callBack ) {
                 rr ( path, config.Omit || [], callBack );
             } ) )
@@ -71,7 +73,7 @@ H ( [ path.resolve ( './deployConf.js' ) ] )
                 return H.wrapCallback ( fs.readFile )( filename )
                     .flatMap ( function ( Body ) {
                         return H ( [ filename ] )
-                            .invoke ( 'replace', [ path.resolve ( './' ) + path.sep, '' ] )
+                            .invoke ( 'replace', [ path.resolve ( cwd ) + path.sep, '' ] )
                             .map ( R.replace ( /\\/g, '/' ) )
                             .map ( R.add ( config.Folder ? ( config.Folder + '/' ) : '' ) )
                             .map ( function ( Key ) {
