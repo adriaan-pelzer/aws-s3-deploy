@@ -68,6 +68,11 @@ H ( [ path.resolve ( path.join ( cwd, 'deployConf.js' ) ) ] )
     .map ( require )
     .map ( R.ifElse ( R.always ( R.isNil ( process.argv[2] ) ), R.identity, R.prop ( process.argv[2] ) ) )
     .flatMap ( function ( config ) {
+        if ( config.aws ) {
+            s3 = new aws.S3 ( config.aws );
+            cf = new aws.CloudFront ( config.aws );
+        }
+
         return H ( [ path.resolve ( cwd ) ] )
             .flatMap ( H.wrapCallback ( function ( path, callBack ) {
                 rr ( path, config.Omit || [], callBack );
