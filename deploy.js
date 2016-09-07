@@ -112,6 +112,7 @@ H ( [ path.resolve ( path.join ( cwd, 'deployConf.js' ) ) ] )
                                     Key: Key,
                                     ACL: 'public-read',
                                     Body: body,
+                                    CacheControl: 'max-age=31536000',
                                     ContentType: mime.lookup ( filename )
                                 };
                             } );
